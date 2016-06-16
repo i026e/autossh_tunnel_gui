@@ -2,6 +2,16 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <object class="GtkAdjustment" id="credits_horizontal_scroll">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="credits_vertical_scroll">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkAdjustment" id="environ_vertical_scroll">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
@@ -31,11 +41,21 @@
       <object class="GtkNotebook" id="notebook">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <property name="margin_left">2</property>
+        <property name="margin_right">2</property>
+        <property name="margin_top">2</property>
+        <property name="margin_bottom">2</property>
+        <property name="hexpand">True</property>
+        <property name="vexpand">True</property>
         <property name="tab_pos">left</property>
         <child>
           <object class="GtkBox" id="box2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="margin_left">2</property>
+            <property name="margin_right">2</property>
+            <property name="margin_top">2</property>
+            <property name="margin_bottom">2</property>
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkGrid" id="grid1">
@@ -49,7 +69,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">end</property>
-                    <property name="label" translatable="yes">external_addr</property>
+                    <property name="label" translatable="yes">Server Addr</property>
                     <property name="justify">right</property>
                   </object>
                   <packing>
@@ -72,7 +92,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">end</property>
-                    <property name="label" translatable="yes">external_user</property>
+                    <property name="label" translatable="yes">Server User</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -94,7 +114,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">end</property>
-                    <property name="label" translatable="yes">external_port</property>
+                    <property name="label" translatable="yes">Server Port</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
@@ -132,7 +152,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">end</property>
-                    <property name="label" translatable="yes">internal_port</property>
+                    <property name="label" translatable="yes">Local Port</property>
                   </object>
                   <packing>
                     <property name="left_attach">2</property>
@@ -168,7 +188,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">key_file</property>
+                    <property name="label" translatable="yes">SSH auth file</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -191,7 +211,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">extra_flags</property>
+                    <property name="label" translatable="yes">SSH extra flags</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -353,7 +373,7 @@
             </child>
             <child>
               <object class="GtkCheckButton" id="connect_on_start">
-                <property name="label" translatable="yes">connect_on_start</property>
+                <property name="label" translatable="yes">Connection on start</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
@@ -369,6 +389,9 @@
             <child>
               <placeholder/>
             </child>
+            <style>
+              <class name="GTK_STYLE_CLASS_FRAME"/>
+            </style>
           </object>
         </child>
         <child type="tab">
@@ -393,8 +416,13 @@
               <object class="GtkTextView" id="log_textview">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="margin_left">1</property>
+                <property name="margin_right">1</property>
+                <property name="margin_top">1</property>
+                <property name="margin_bottom">1</property>
                 <property name="hadjustment">log_horizontal_scroll</property>
                 <property name="vadjustment">log_vertical_scroll</property>
+                <property name="wrap_mode">word</property>
               </object>
             </child>
           </object>
@@ -415,12 +443,75 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="about_scrolledwindow">
+          <object class="GtkBox" id="box4">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
             <child>
-              <placeholder/>
+              <object class="GtkBox" id="box5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkImage" id="program_icon">
+                    <property name="width_request">32</property>
+                    <property name="height_request">32</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xpad">5</property>
+                    <property name="ypad">5</property>
+                    <property name="pixbuf">./icons/tunnel-pathway-symbol.svg</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="program_name">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">AutoSSH Tunnel Control</property>
+                    <property name="ellipsize">start</property>
+                    <attributes>
+                      <attribute name="weight" value="bold"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="about_scrolledwindow">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTextView" id="credits_view">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hadjustment">credits_horizontal_scroll</property>
+                    <property name="vadjustment">credits_vertical_scroll</property>
+                    <property name="editable">False</property>
+                    <property name="wrap_mode">char</property>
+                    <property name="cursor_visible">False</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>

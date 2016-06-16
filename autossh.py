@@ -75,8 +75,9 @@ def idle_add_decorator(func):
     return callback
 
 class DefaultPreferences:
-    GUI_GLADE_FILE = "autossh.glade"
+    GUI_GLADE_FILE = "autossh.glade"    
     GUI_ICON_THEME_PATH = "./icons/light/"
+    GUI_CREDITS_FILE = "credits.txt"
     
     CONNECT_ON_START = False
     
@@ -105,6 +106,8 @@ class DefaultPreferences:
 class Preferences:
     option_names = {"glade_file":       ("GUI_GLADE_FILE", str),
                     "icon_theme_path":  ("GUI_ICON_THEME_PATH", str),
+                    "credits_file":     ("GUI_CREDITS_FILE", str),
+
                     "connect_on_start": ("CONNECT_ON_START", bool),
                     "poll_interval":    ("POLL_INTERVAL", float),
                     "log_keep_entries": ("LOG_KEEP_ENTRIES", int),
@@ -114,6 +117,7 @@ class Preferences:
                     "ssh_external_port": ("SSH_EXTERNAL_PORT", str),
                     "ssh_external_user": ("SSH_EXTERNAL_USER", str),
                     "ssh_internal_port": ("SSH_INTERNAL_PORT", str),
+
                     "ssh_key_file":         ("SSH_KEY_FILE", str),
                     "ssh_extra_flags":      ("SSH_EXTRA_FLAGS", str),
                     "ssh_extra_options":    ("SSH_EXTRA_OPTIONS", list),
@@ -269,7 +273,7 @@ class AutosshClient:
         return val
         
     def run(self, poll_interval, on_stop_cb):
-        Logger().log(self.env)
+        #Logger().log(self.env)
         Logger().log(self.command)
         
         try :        
@@ -531,6 +535,9 @@ class GUI:
             #logging
             self.log_textview = self.builder.get_object("log_textview")
             self.log_buffer = self.log_textview.get_buffer()
+            
+            #credits
+            self.set_credits()
                     
         self.pref_fields_to_window()
         
@@ -543,6 +550,18 @@ class GUI:
         open_page = GUI.NOTEBOOK_PAGES.get(notebook_page, 0)
         self.notebook.set_current_page(open_page)
         
+    def set_credits(self):
+        credits_file = self.preferences.credits_file
+        
+        try:
+            with open(credits_file, "r") as cf:
+                credits_view = self.builder.get_object("credits_view")
+                credits_buffer = credits_view.get_buffer()
+                credits_buffer.set_text(cf.read())
+        except (TypeError, IOError) as e:
+            Logger().log(e)
+
+    
     # from     
     def pref_fields_from_window(self):
         for option_name in self.preferences.options:
