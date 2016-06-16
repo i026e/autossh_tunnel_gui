@@ -6,6 +6,12 @@ __pycache__/
 # Configuration
 config.txt
 
+# Galde backup
+*.glade~
+
+# tmp
+tmp/
+
 # C extensions
 *.so
 
