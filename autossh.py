@@ -276,11 +276,14 @@ class AutosshClient:
         #Logger().log(self.env)
         Logger().log(self.command)
         
+        self.terminated = False
+        
         try :        
             self.process = subprocess.Popen(self.command,
                                             env=self.env,
                                             stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT)
+                                            stderr=subprocess.STDOUT,
+                                            preexec_fn=os.setsid)
           
     
             thr = threading.Thread(target=self.poll, 
@@ -290,27 +293,33 @@ class AutosshClient:
             Logger().log(e)
             on_stop_cb(-1)
         
-    def poll(self, poll_interval, on_stop_cb):
-        while (self.process is not None):
-            Logger().log(self.process.stdout.readline())
-            
+    def poll(self, poll_interval, on_stop_cb):        
+        while True:
+            if self.terminated:
+                self.process.terminate() 
+                #self.process.kill()
+                
+                # Send the signal to all the process groups
+                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
             
             retcode = self.process.poll()
             if retcode is not None: #Process finished
+                #stdout, stderr = self.process.communicate()
+                Logger().log(self.process.communicate())                
+                
                 on_stop_cb(retcode)
-                Logger().log("exit with code", retcode)
-                break
-            
-            
+                Logger().log("returned code", retcode)
+                
+                break 
+            else:
+                Logger().log(self.process.stdout.readline()) 
             
             time.sleep(poll_interval)
             
             
             
     def stop(self):
-        if self.process is not None:
-            #self.process.terminate()            
-            self.process.kill()            
+        self.terminated = True            
 
 
     def get_env(self, environ_options):
@@ -516,7 +525,7 @@ class GUI:
         if self.ssh_client is not None:
             self.ssh_client.stop()
             self.ssh_client = None  
-        self.indicator.mode_inactive()    
+        #self.indicator.mode_inactive()    
  
     def show_window(self, notebook_page):
         if self.window is None:
