@@ -92,7 +92,7 @@ class DefaultPreferences:
     SSH_KEY_FILE = "~/.ssh/id_pub"
 
                        
-    SSH_EXTRA_FLAGS = "-v -C"
+    SSH_EXTRA_FLAGS = "-v -C -T"
     # -o option                   
     SSH_EXTRA_OPTIONS = ["TCPKeepAlive=yes", 
                          "ServerAliveInterval=300"]
@@ -281,6 +281,7 @@ class AutosshClient:
         try :        
             self.process = subprocess.Popen(self.command,
                                             env=self.env,
+                                            stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT,
                                             preexec_fn=os.setsid)
@@ -312,7 +313,7 @@ class AutosshClient:
                 
                 break 
             else:
-                Logger().log(self.process.stdout.readline()) 
+                Logger().log(self.process.communicate()) 
             
             time.sleep(poll_interval)
             
@@ -487,10 +488,8 @@ class GUI:
             
         self.indicator = IndicatorControl(self.preferences, self.callback)
         
-        self.ssh_client = None 
-        
-
-    
+        self.ssh_client = None
+   
     def run(self):
         gtk.main() 
         
