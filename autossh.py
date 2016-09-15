@@ -489,12 +489,18 @@ class GUI:
         self.indicator = IndicatorControl(self.preferences, self.callback)
         
         self.ssh_client = None
+
+        print("autoconnect")
+        if self.preferences.connect_on_start:
+            print("autoconnect")
+            self.connect() 
+
+	
    
     def run(self):
         gtk.main() 
-        
-        if self.preferences.connect_on_start:
-            self.connect()
+
+
          
     def do_action(self):
         if self.ssh_client is None:
