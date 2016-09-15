@@ -313,7 +313,7 @@ class AutosshClient:
                 
                 break 
             else:
-                Logger().log(self.process.communicate()) 
+                Logger().log(self.process.stdout.readline()) 
             
             time.sleep(poll_interval)
             
@@ -488,19 +488,17 @@ class GUI:
             
         self.indicator = IndicatorControl(self.preferences, self.callback)
         
-        self.ssh_client = None
+        self.ssh_client = None 
+        
 
-        print("autoconnect")
-        if self.preferences.connect_on_start:
-            print("autoconnect")
-            self.connect() 
-
-	
-   
+    
     def run(self):
+        if self.preferences.connect_on_start:
+            self.connect()
+
         gtk.main() 
-
-
+        
+        
          
     def do_action(self):
         if self.ssh_client is None:
