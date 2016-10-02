@@ -127,9 +127,8 @@ class Preferences:
 
 
     def __init__(self, conf_file = None):
-        self.conf_file = conf_file \
-            if conf_file is not None \
-            else DefaultPreferences.CONFIG_FILE
+        self.conf_file = DefaultPreferences.CONFIG_FILE \
+            if conf_file is None else conf_file
 
         overwritten = self.load_from_file()
 
@@ -224,8 +223,8 @@ class Preferences:
     def save_to_file(self):
         config_path = os.path.expanduser(self.conf_file)
 
-        try:
-            os.makedirs(os.path.dirname(config_path, exist_ok=True))
+        try:            
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
             with open(config_path, "w") as f:
                 for option in Preferences.option_names:
@@ -265,7 +264,7 @@ class AutosshClient:
         self.command += [self.escape(ssh_external_addr)]
         self.command += ["-p", self.escape(ssh_external_port)]
         self.command += ["-l", self.escape(ssh_external_user)]
-        self.command += ["-i", self.escape(ssh_key_file)]
+        self.command += ["-i", self.escape(os.path.expanduser(ssh_key_file))]
 
         for option in ssh_extra_options:
             self.command += ["-o", self.escape(option)]
