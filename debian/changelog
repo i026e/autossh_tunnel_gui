@@ -1,5 +1,5 @@
-autossh-gui (0.0.1-1) unstable; urgency=medium
+autossh-gui (0.0.2-1) unstable; urgency=medium
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 
- -- Pavel Klevakin <klev.paul@gmail.com>  Sun, 02 Oct 2016 16:30:54 +0300
+ -- Pavel Klevakin <klev.paul@gmail.com>  Thu, 17 Nov 2016 12:01:09 +0300

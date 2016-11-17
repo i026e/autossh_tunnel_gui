@@ -21,9 +21,19 @@ import collections
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk as gtk
+from gi.repository import Gtk
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import GObject
+
+import locale
+from locale import gettext as _
+locale.setlocale(locale.LC_ALL, '')
+APP = 'autossh-gui'
+
+if os.path.isdir("./locale"):
+    locale.bindtextdomain(APP, "./locale")
+
+locale.textdomain(APP)
 
 class Logger(object):
     #singleton
@@ -68,7 +78,7 @@ class Logger(object):
             circular_buffer.appendleft(self.circular_buffer.pop())
         self.circular_buffer = circular_buffer
 
-# decorator for safely update gtk
+# decorator for safely update Gtk
 def idle_add_decorator(func):
     def callback(*args):
         GObject.idle_add(func, *args)
@@ -223,7 +233,7 @@ class Preferences:
     def save_to_file(self):
         config_path = os.path.expanduser(self.conf_file)
 
-        try:            
+        try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
             with open(config_path, "w") as f:
@@ -346,26 +356,26 @@ class AutosshClient:
 
 class ControlMenu:
     def __init__(self, callback):
-        self.menu = gtk.Menu()
+        self.menu = Gtk.Menu()
         self.items = {}
 
-        self._add_item("status", "Status", lbl_pattern="Status: {0}")
+        self._add_item("status", _("Status"), lbl_pattern=_("Status: {0}"))
 
-        self._add_item("action", "Action", on_activate = callback.on_do_action)
+        self._add_item("action", _("Action"), on_activate = callback.on_do_action)
 
-        self.menu.append(gtk.SeparatorMenuItem())
+        self.menu.append(Gtk.SeparatorMenuItem())
 
-        self._add_item("options","Options", on_activate = callback.on_show_options)
-        self._add_item("log", "Log", on_activate = callback.on_show_log)
+        self._add_item("options", _("Options"), on_activate = callback.on_show_options)
+        self._add_item("log", _("Log"), on_activate = callback.on_show_log)
 
-        self.menu.append(gtk.SeparatorMenuItem())
+        self.menu.append(Gtk.SeparatorMenuItem())
 
-        self._add_item("quit", "Quit", on_activate = callback.on_show_quit)
+        self._add_item("quit", _("Quit"), on_activate = callback.on_show_quit)
 
         self.menu.show_all()
 
     def _add_item(self, item_name, lbl, on_activate = None, lbl_pattern=None):
-        item = gtk.MenuItem(lbl)
+        item = Gtk.MenuItem(lbl)
 
         if on_activate is not None:
             item.connect('activate', on_activate)
@@ -391,17 +401,17 @@ class ControlMenu:
 
 class IndicatorControl:
     APPINDICATOR_ID = 'autossh'
-    INDICATOR_ICON = gtk.STOCK_INFO
+    INDICATOR_ICON = Gtk.STOCK_INFO
 
 
     MODES = {"active": {
                  "icon" : "active.svg",
-                 "status" : "Active",
-                 "action" : "Stop"},
+                 "status" : _("Active"),
+                 "action" : _("Stop")},
              "inactive" : {
                  "icon" : "inactive.svg",
-                 "status" : "Inactive",
-                 "action" : "Start"},
+                 "status" : _("Inactive"),
+                 "action" : _("Start")},
 
              }
 
@@ -463,10 +473,10 @@ class GUI_callback:
         return window.hide() or True
 
     def on_button_cancel_clicked(self, *args):
-        Logger().log("Settings restored")
+        Logger().log(_("Settings restored"))
         self.gui.pref_fields_to_window()
     def on_button_ok_clicked(self, *args):
-        Logger().log("Settings saved")
+        Logger().log(_("Settings saved"))
         self.gui.pref_fields_from_window()
 
     def on_do_action(self, source):
@@ -505,7 +515,7 @@ class GUI:
         if self.preferences.connect_on_start:
             self.connect()
 
-        gtk.main()
+        Gtk.main()
 
 
 
@@ -541,7 +551,8 @@ class GUI:
 
     def show_window(self, notebook_page):
         if self.window is None:
-            self.builder = gtk.Builder()
+            self.builder = Gtk.Builder()
+            self.builder.set_translation_domain(APP)
             self.builder.add_from_file(self.preferences.glade_file)
             self.builder.connect_signals(self.callback)
 
@@ -609,10 +620,10 @@ class GUI:
         # -read function for field
         # -write function for field
         # -string mode
-        if isinstance(field, gtk.Entry):
+        if isinstance(field, Gtk.Entry):
             return field.get_text, field.set_text, True
 
-        if isinstance(field, gtk.TextView):
+        if isinstance(field, Gtk.TextView):
             buffer = field.get_buffer()
             start_iter = buffer.get_start_iter()
             end_iter = buffer.get_end_iter()
@@ -620,7 +631,7 @@ class GUI:
                 buffer.get_text(st, en, True)
             return read, buffer.set_text, True
 
-        if isinstance(field, gtk.CheckButton):
+        if isinstance(field, Gtk.CheckButton):
             return field.get_active, field.set_active, False
 
         return None, None, None
@@ -640,13 +651,11 @@ class GUI:
 
     def quit_(self, source):
         self.disconnect()
-        gtk.main_quit()
+        Gtk.main_quit()
 
 
 if __name__ == "__main__":
     Logger().add_observer("print", print)
-
-
 
     conf_file = sys.argv[1] if len(sys.argv) >= 2 else None
 

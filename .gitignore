@@ -1,7 +1,7 @@
 .pc
-debian/autossh-gui
-debian/patches
-src/icons
+debian
+locale
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

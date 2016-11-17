@@ -1,15 +1,15 @@
 Source: autossh-gui
-Section: utils
+Section: unknown
 Priority: optional
 Maintainer: Pavel Klevakin <klev.paul@gmail.com>
 Build-Depends: debhelper (>=9)
 Standards-Version: 3.9.6
-Homepage: https://github.com/i026e/autossh_tunnel_gui
+Homepage: <insert the upstream URL, if relevant>
 #Vcs-Git: git://anonscm.debian.org/collab-maint/autossh-gui.git
 #Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/autossh-gui.git
 
 Package: autossh-gui
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, autossh, python3, python3-gi, python3-gi-cairo
-Description: GUI for autossh tool
- Create and keep SSH tunnel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
