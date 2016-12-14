@@ -27,8 +27,6 @@ install: translations
 
 	cp -r locale "$(INSTALL_DIR)usr/share"
 
-
-
 debian:
 	dh_make --createorig -y -s
 	dpkg-source --commit
@@ -66,4 +64,5 @@ translations: ./po/*.po
 clean:
 	rm -rf "$(INSTALL_DIR)"
 	rm -rf locale
+	rm -rf .pc
 

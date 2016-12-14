@@ -86,7 +86,8 @@ def idle_add_decorator(func):
 
 class DefaultPreferences:
     GUI_GLADE_FILE = "autossh-gui.glade"
-    GUI_ICON_THEME_PATH = "./icons/light/"
+    GUI_ICON_PATH = "./icons"
+    GUI_ICON_THEME = "light"
     GUI_CREDITS_FILE = "credits.txt"
 
     CONFIG_FILE = "~/.config/autossh-gui/config.ini"
@@ -103,11 +104,10 @@ class DefaultPreferences:
     SSH_INTERNAL_PORT = "9999"
     SSH_KEY_FILE = "~/.ssh/id_pub"
 
-
-    SSH_EXTRA_FLAGS = "-v -C -T"
     # -o option
-    SSH_EXTRA_OPTIONS = ["TCPKeepAlive=yes",
-                         "ServerAliveInterval=300"]
+    SSH_EXTRA_OPTIONS = ["-v -C -T",
+                         "-o TCPKeepAlive=yes",
+                         "-o ServerAliveInterval=300"]
 
     # export ...
     SSH_ENV_OPTIONS = ["AUTOSSH_POLL=30",
@@ -117,7 +117,8 @@ class DefaultPreferences:
 
 class Preferences:
     option_names = {"glade_file":       ("GUI_GLADE_FILE", str),
-                    "icon_theme_path":  ("GUI_ICON_THEME_PATH", str),
+                    "icon_path":        ("GUI_ICON_PATH", str),
+                    "icon_theme":       ("GUI_ICON_THEME", str),
                     "credits_file":     ("GUI_CREDITS_FILE", str),
 
                     "connect_on_start": ("CONNECT_ON_START", bool),
@@ -131,7 +132,6 @@ class Preferences:
                     "ssh_internal_port": ("SSH_INTERNAL_PORT", str),
 
                     "ssh_key_file":         ("SSH_KEY_FILE", str),
-                    "ssh_extra_flags":      ("SSH_EXTRA_FLAGS", str),
                     "ssh_extra_options":    ("SSH_EXTRA_OPTIONS", list),
                     "ssh_env_options":      ("SSH_ENV_OPTIONS", list), }
 
@@ -204,9 +204,6 @@ class Preferences:
                                         cannot convert to list".format(name))
 
 
-
-
-
     def load_from_file(self):
         params = {}
 
@@ -262,7 +259,6 @@ class AutosshClient:
                  ssh_external_user,
                  ssh_internal_port,
                  ssh_key_file,
-                 ssh_extra_flags="",
                  ssh_extra_options = [],
                  ssh_environ_options = [] ):
 
@@ -277,9 +273,7 @@ class AutosshClient:
         self.command += ["-i", self.escape(os.path.expanduser(ssh_key_file))]
 
         for option in ssh_extra_options:
-            self.command += ["-o", self.escape(option)]
-
-        self.command += [self.escape(flag) for flag in ssh_extra_flags.split()]
+            self.command += [self.escape(opt) for opt in option.split()]
 
         self.env = self.get_env(ssh_environ_options)
 
@@ -431,7 +425,9 @@ class IndicatorControl:
         self.mode_inactive()
 
     def _set_icons(self):
-        theme_path = os.path.abspath(self.preferences.icon_theme_path)
+        icon_path = os.path.abspath(self.preferences.icon_path)
+        theme_path = os.path.join(icon_path, self.preferences.icon_theme)
+
         if theme_path is not None and os.path.exists(theme_path):
             self.indicator.set_icon_theme_path(theme_path)
 
@@ -535,7 +531,6 @@ class GUI:
                                             self.preferences.ssh_external_user,
                                             self.preferences.ssh_internal_port,
                                             self.preferences.ssh_key_file,
-                                            self.preferences.ssh_extra_flags,
                                             self.preferences.ssh_extra_options,
                                             self.preferences.ssh_env_options)
 
@@ -633,6 +628,24 @@ class GUI:
 
         if isinstance(field, Gtk.CheckButton):
             return field.get_active, field.set_active, False
+
+        if isinstance(field, Gtk.ComboBox):
+            model = field.get_model()
+            def read():
+                iter_ = field.get_active_iter()
+                return model.get_value(iter_, 0)
+
+            def write(value):
+                iter_ = model.get_iter_first()
+                while iter_ is not None:
+                    if model.get_value(iter_, 0) == value:
+                        field.set_active_iter(iter_)
+                        break
+                    iter_ = model.iter_next(iter_)
+
+            return read, write, False
+
+
 
         return None, None, None
 
