@@ -20,11 +20,18 @@ import collections
 
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('AppIndicator3', '0.1')
 from gi.repository import Gtk
-from gi.repository import AppIndicator3 as appindicator
 from gi.repository import GObject
 
+USE_APPINDICATOR = False
+try:
+    gi.require_version('AppIndicator3', '0.1')
+    from gi.repository import AppIndicator3 as appindicator
+    USE_APPINDICATOR = True
+except:
+    print("No AppIndicator, using StatusIcon instead")
+
+#translation
 import locale
 from locale import gettext as _
 locale.setlocale(locale.LC_ALL, '')
@@ -112,7 +119,8 @@ class DefaultPreferences:
     # export ...
     SSH_ENV_OPTIONS = ["AUTOSSH_POLL=30",
                        "AUTOSSH_GATETIME=0",
-                       "AUTOSSH_DEBUG=1"]
+                       "AUTOSSH_DEBUG=1",
+                       "AUTOSSH_PORT=0"]
 
 
 class Preferences:
@@ -348,7 +356,7 @@ class AutosshClient:
         return env
 
 
-class ControlMenu:
+class ControlMenu():
     def __init__(self, callback):
         self.menu = Gtk.Menu()
         self.items = {}
@@ -381,7 +389,6 @@ class ControlMenu:
 
         self.menu.append(item)
 
-
     def update(self, item_name, text):
         if item_name in self.items:
             (item, lbl_pattern) = self.items[item_name]
@@ -391,12 +398,13 @@ class ControlMenu:
 
             item.set_label(text)
 
+    def show(self, button, time):
+        self.menu.popup(None, None, None, None, button, time)
 
 
-class IndicatorControl:
-    APPINDICATOR_ID = 'autossh'
+class TaskbarIndicator:
+    INDICATOR_ID = 'autossh'
     INDICATOR_ICON = Gtk.STOCK_INFO
-
 
     MODES = {"active": {
                  "icon" : "active.svg",
@@ -406,58 +414,101 @@ class IndicatorControl:
                  "icon" : "inactive.svg",
                  "status" : _("Inactive"),
                  "action" : _("Start")},
-
              }
-
 
     def __init__(self, preferences, callback):
         self.preferences = preferences
-
         self.menu = ControlMenu(callback)
-
-        self.indicator = appindicator.Indicator.new(IndicatorControl.APPINDICATOR_ID,
-                                IndicatorControl.INDICATOR_ICON,
-                                appindicator.IndicatorCategory.SYSTEM_SERVICES)
-
-        self.indicator.set_menu(self.menu.menu)
         self._set_icons()
+        self._set_indicator()
 
         self.mode_inactive()
 
     def _set_icons(self):
+        self.inactive_icon = TaskbarIndicator.INDICATOR_ICON
+        self.active_icon = TaskbarIndicator.INDICATOR_ICON
+
         icon_path = os.path.abspath(self.preferences.icon_path)
-        theme_path = os.path.join(icon_path, self.preferences.icon_theme)
+        self.theme_path = os.path.join(icon_path, self.preferences.icon_theme)
 
-        if theme_path is not None and os.path.exists(theme_path):
-            self.indicator.set_icon_theme_path(theme_path)
+        if os.path.exists(self.theme_path):
+            inactive_icon = os.path.join(self.theme_path,
+                                    TaskbarIndicator.MODES["inactive"]["icon"])
 
-            inactive_icon = os.path.join(theme_path,
-                                         IndicatorControl.MODES["inactive"]["icon"])
+            active_icon = os.path.join(self.theme_path,
+                                    TaskbarIndicator.MODES["active"]["icon"])
 
-            active_icon = os.path.join(theme_path,
-                                         IndicatorControl.MODES["active"]["icon"])
-
-            self.indicator.set_icon(inactive_icon)
-            self.indicator.set_attention_icon(active_icon)
-
-
+            if os.path.exists(inactive_icon):
+                self.inactive_icon = inactive_icon
+            if os.path.exists(active_icon):
+                self.active_icon = active_icon
         else:
-            self.indicator.set_icon(IndicatorControl.INDICATOR_ICON)
             Logger().log("Icon theme path {0} does not exist".format(theme_path))
 
-    def _set_mode(self, mode):
-        if mode in IndicatorControl.MODES:
-            self.menu.update("status", IndicatorControl.MODES[mode]["status"])
-            self.menu.update("action", IndicatorControl.MODES[mode]["action"])
-            #self._set_icon(mode)
+    def _set_indicator(self):
+        raise notImplemented
+
+    def _set_menu_mode(self, mode):
+        if mode in StatusIcon.MODES:
+            self.menu.update("status", TaskbarIndicator.MODES[mode]["status"])
+            self.menu.update("action", TaskbarIndicator.MODES[mode]["action"])
 
     def mode_active(self) :
-        self._set_mode("active")
+        self._set_menu_mode("active")
+
+    def mode_inactive(self):
+        self._set_menu_mode("inactive")
+
+
+class APP_Indicator(TaskbarIndicator):
+    def _set_indicator(self):
+        self.indicator = appindicator.Indicator.new(self.INDICATOR_ID,
+                                self.INDICATOR_ICON,
+                                appindicator.IndicatorCategory.SYSTEM_SERVICES)
+
+        self.indicator.set_menu(self.menu.menu)
+
+        self.indicator.set_icon_theme_path(self.theme_path)
+
+        self.indicator.set_icon(self.inactive_icon)
+        self.indicator.set_attention_icon(self.active_icon)
+
+    def mode_active(self) :
+        super(APP_Indicator, self).mode_active()
         self.indicator.set_status(appindicator.IndicatorStatus.ATTENTION)
 
     def mode_inactive(self) :
-        self._set_mode("inactive")
+        super(APP_Indicator, self).mode_inactive()
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+
+class StatusIcon(TaskbarIndicator):
+    def _set_indicator(self):
+        self.indicator = Gtk.StatusIcon()
+
+        #menu on right mouse button
+        self.indicator.connect("popup-menu", self.show_menu)
+
+        #left (double)click acts as right click
+        self.indicator.connect("activate", lambda *args :
+                                self.indicator.emit("popup-menu",
+                                0, Gtk.get_current_event_time()))
+
+    def show_menu(self, icon, button, time):
+        self.menu.show(button, time)
+
+    def change_icon(self, icon):
+        if icon == self.INDICATOR_ICON:
+            self.indicator.set_from_stock(icon)
+        else:
+            self.indicator.set_from_file(icon)
+
+    def mode_active(self) :
+        super(StatusIcon, self).mode_active()
+        self.change_icon(self.active_icon)
+
+    def mode_inactive(self):
+        super(StatusIcon, self).mode_inactive()
+        self.change_icon(self.inactive_icon)
 
 
 class GUI_callback:
@@ -501,7 +552,8 @@ class GUI:
 
         self.callback = GUI_callback(self)
 
-        self.indicator = IndicatorControl(self.preferences, self.callback)
+        indicator = APP_Indicator if USE_APPINDICATOR else StatusIcon
+        self.indicator = indicator(self.preferences, self.callback)
 
         self.ssh_client = None
 

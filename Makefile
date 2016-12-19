@@ -4,7 +4,10 @@ RSA_KEY = 425C42BE
 PPA = i026e/udev-notify
 
 PACKAGE = autossh-gui
-INSTALL_DIR = "./debian/$(PACKAGE)/"
+
+if [ -n "$INSTALL_DIR" ]; then
+	INSTALL_DIR = "./debian/$(PACKAGE)/"
+fi
 
 all:
 
