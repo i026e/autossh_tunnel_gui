@@ -1,7 +1,12 @@
 .pc
-debian
 locale
 
+arch/autossh-gui
+arch/pkg
+arch/src
+
+debian/autossh-gui
+debian/source
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

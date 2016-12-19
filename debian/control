@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Pavel Klevakin <klev.paul@gmail.com>
 Build-Depends: debhelper (>=9)
 Standards-Version: 3.9.6
-Homepage: <insert the upstream URL, if relevant>
+Homepage: https://github.com/i026e/autossh_tunnel_gui
 #Vcs-Git: git://anonscm.debian.org/collab-maint/autossh-gui.git
 #Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/autossh-gui.git
 

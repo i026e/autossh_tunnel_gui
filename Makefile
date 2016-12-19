@@ -1,41 +1,40 @@
 export SHELL = sh
 
-RSA_KEY = 425C42BE
-PPA = i026e/udev-notify
-
 PACKAGE = autossh-gui
 
-if [ -n "$INSTALL_DIR" ]; then
-	INSTALL_DIR = "./debian/$(PACKAGE)/"
-fi
+ifndef DESTDIR
+	DESTDIR = "./debian/$(PACKAGE)/"
+endif
 
 all:
 
 install: translations
-	[ ! -d "$(INSTALL_DIR)" ] || rm -r "$(INSTALL_DIR)"
+	[ ! -d "$(DESTDIR)" ] || rm -r "$(DESTDIR)"
 
-	mkdir -p "$(INSTALL_DIR)usr/bin/"
-	mkdir -p "$(INSTALL_DIR)usr/share/$(PACKAGE)/"
-	mkdir -p "$(INSTALL_DIR)usr/share/applications/"
+	mkdir -p "$(DESTDIR)usr/bin/"
+	mkdir -p "$(DESTDIR)usr/share/$(PACKAGE)/"
+	mkdir -p "$(DESTDIR)usr/share/applications/"
 
-	install -D -m 0755 "./src/autossh-gui" "$(INSTALL_DIR)usr/bin/$(PACKAGE)"
+	install -D -m 0755 "./src/autossh-gui" "$(DESTDIR)usr/bin/$(PACKAGE)"
 
-	cp "./src/autossh-gui.py" "$(INSTALL_DIR)usr/share/$(PACKAGE)/"
-	cp "./src/autossh-gui.glade" "$(INSTALL_DIR)usr/share/$(PACKAGE)/"
-	cp "./credits.txt" "$(INSTALL_DIR)usr/share/$(PACKAGE)/"
-	cp -r "./icons" "$(INSTALL_DIR)usr/share/$(PACKAGE)/"
+	cp "./src/autossh-gui.py" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp "./src/autossh-gui.glade" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp "./credits.txt" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp -r "./icons" "$(DESTDIR)usr/share/$(PACKAGE)/"
 
 
-	cp "./src/autossh-gui.desktop" "$(INSTALL_DIR)usr/share/applications/"
+	cp "./src/autossh-gui.desktop" "$(DESTDIR)usr/share/applications/"
 
-	cp -r locale "$(INSTALL_DIR)usr/share"
+	cp -r locale "$(DESTDIR)usr/share"
 
 debian:
 	dh_make --createorig -y -s
 	dpkg-source --commit
 	debuild -us -uc
-#	debuild -S -k"$RSA_KEY"
-#	dput -f ppa:$PPA ../*_source.changes
+
+arch:
+	cd ./arch
+	makepkg
 
 pot:
 	mkdir -p ./po
@@ -65,7 +64,7 @@ translations: ./po/*.po
 	done
 
 clean:
-	rm -rf "$(INSTALL_DIR)"
+	rm -rf "$(DESTDIR)"
 	rm -rf locale
 	rm -rf .pc
 
