@@ -1,6 +1,7 @@
 export SHELL = sh
 
 PACKAGE = autossh-gui
+SOURCES = ./src/autossh-gui.*
 
 ifndef DESTDIR
 	DESTDIR = "./debian/$(PACKAGE)/"
@@ -32,9 +33,8 @@ debian:
 	dpkg-source --commit
 	debuild -us -uc
 
-arch:
-	cd ./arch
-	makepkg
+arch: $(SOURCES)
+	cd ./arch && makepkg
 
 pot:
 	mkdir -p ./po
@@ -68,3 +68,4 @@ clean:
 	rm -rf locale
 	rm -rf .pc
 
+.PHONY: clean install
