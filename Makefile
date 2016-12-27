@@ -21,7 +21,7 @@ install: translations
 	cp "./src/autossh-gui.glade" "$(DESTDIR)usr/share/$(PACKAGE)/"
 	cp "./credits.txt" "$(DESTDIR)usr/share/$(PACKAGE)/"
 	cp -r "./icons" "$(DESTDIR)usr/share/$(PACKAGE)/"
-
+	cp "./src/autossh-gui.desktop" "$(DESTDIR)usr/share/$(PACKAGE)/"
 
 	cp "./src/autossh-gui.desktop" "$(DESTDIR)usr/share/applications/"
 

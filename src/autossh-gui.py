@@ -98,7 +98,10 @@ class DefaultPreferences:
     GUI_CREDITS_FILE = "credits.txt"
 
     CONFIG_FILE = "~/.config/autossh-gui/config.ini"
+    DESKTOP_FILE = "./autossh-gui.desktop"
+    AUTOSTART_FILE = "~/.config/autostart/autossh-gui.desktop"
 
+    AUTOSTART = False
     CONNECT_ON_START = False
 
     POLL_INTERVAL = 0.1
@@ -127,8 +130,11 @@ class Preferences:
     option_names = {"glade_file":       ("GUI_GLADE_FILE", str),
                     "icon_path":        ("GUI_ICON_PATH", str),
                     "icon_theme":       ("GUI_ICON_THEME", str),
-                    "credits_file":     ("GUI_CREDITS_FILE", str),
+                    "credits_file":     ("GUI_CREDITS_FILE", str), 
+                    "desktop_file":     ("DESKTOP_FILE", str),
+                    "autostart_file":   ("AUTOSTART_FILE", str),
 
+                    "autostart":        ("AUTOSTART", bool),
                     "connect_on_start": ("CONNECT_ON_START", bool),
                     "poll_interval":    ("POLL_INTERVAL", float),
                     "log_keep_entries": ("LOG_KEEP_ENTRIES", int),
@@ -443,10 +449,10 @@ class TaskbarIndicator:
             if os.path.exists(active_icon):
                 self.active_icon = active_icon
         else:
-            Logger().log("Icon theme path {0} does not exist".format(theme_path))
+            Logger().log("Icon theme path {0} does not exist".format(self.theme_path))
 
     def _set_indicator(self):
-        raise notImplemented
+        raise NotImplementedError
 
     def _set_menu_mode(self, mode):
         if mode in StatusIcon.MODES:
@@ -511,9 +517,48 @@ class StatusIcon(TaskbarIndicator):
         self.change_icon(self.inactive_icon)
 
 
+class Autostart:
+    @staticmethod
+    def set_autostart(preferences):        
+        desktop_file = os.path.expanduser(preferences.desktop_file)
+        autostart_file = os.path.expanduser(preferences.autostart_file)
+        if preferences.autostart:
+            Autostart.enable(desktop_file, autostart_file)
+        else:
+            Autostart.disable(autostart_file)
+    
+    @staticmethod    
+    def enable(desktop_file, autostart_file):
+        if os.path.exists(autostart_file):
+            Logger().log(_("Autostart already enabled"))
+            return
+            
+        try:
+            directory = os.path.dirname(autostart_file)
+            subprocess.call(["mkdir", "-p", directory])
+            subprocess.call(["cp", desktop_file, autostart_file])
+            Logger().log(_("Autostart enabled"))
+        except Exception as e:
+            Logger().log("Problem with copying autostart file:", e)
+    
+    @staticmethod        
+    def disable(autostart_file):
+        if not os.path.exists(autostart_file):
+            Logger().log(_("Autostart already disabled"))
+            return
+        
+        try:
+            os.remove(autostart_file)
+            Logger().log(_("Autostart disbled"))
+        except Exception as e:
+            Logger().log("Problem with deleting autostart file:", e)
+        
+
+
 class GUI_callback:
-    def __init__(self, gui):
+    def __init__(self, gui, preferences):
         self.gui = gui
+        self.preferences = preferences
 
     def on_window_hide(self, window, event):
         Logger().delete_observer("log_textview")
@@ -522,9 +567,12 @@ class GUI_callback:
     def on_button_cancel_clicked(self, *args):
         Logger().log(_("Settings restored"))
         self.gui.pref_fields_to_window()
+        
+
     def on_button_ok_clicked(self, *args):
         Logger().log(_("Settings saved"))
         self.gui.pref_fields_from_window()
+        Autostart.set_autostart(self.preferences)
 
     def on_do_action(self, source):
         self.gui.do_action()
@@ -546,17 +594,17 @@ class GUI:
     def __init__(self, conf_file = None):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.window = None
+        self.ssh_client = None
 
         self.preferences = Preferences(conf_file)
         Logger().set_buffer_size(self.preferences.log_keep_entries)
 
-        self.callback = GUI_callback(self)
+        self.callback = GUI_callback(self, self.preferences)
 
         indicator = APP_Indicator if USE_APPINDICATOR else StatusIcon
         self.indicator = indicator(self.preferences, self.callback)
-
-        self.ssh_client = None
-
+        
+        Autostart.set_autostart(self.preferences)
 
 
     def run(self):

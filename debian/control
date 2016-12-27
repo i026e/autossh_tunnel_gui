@@ -10,6 +10,6 @@ Homepage: https://github.com/i026e/autossh_tunnel_gui
 
 Package: autossh-gui
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Depends: ${shlibs:Depends}, ${misc:Depends}, autossh, python3
+Description: GUI for autossh
+ Add icon to tray to control autossh
