@@ -114,7 +114,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="ssh_external_addr">
+                          <object class="GtkEntry" id="ssh.external_addr">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                           </object>
@@ -148,7 +148,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="ssh_external_port">
+                          <object class="GtkEntry" id="ssh.external_port">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="max_length">5</property>
@@ -174,7 +174,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="ssh_external_user">
+                          <object class="GtkEntry" id="ssh.external_user">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                           </object>
@@ -185,7 +185,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="ssh_key_file">
+                          <object class="GtkEntry" id="ssh.key_file">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="hexpand">True</property>
@@ -266,7 +266,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkEntry" id="ssh_internal_port">
+                          <object class="GtkEntry" id="ssh.internal_port">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="max_length">5</property>
@@ -303,7 +303,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBox" id="icon_theme">
+                          <object class="GtkComboBox" id="app.icon_theme">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">end</property>
@@ -323,7 +323,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="connect_on_start">
+                          <object class="GtkCheckButton" id="app.connect_on_start">
                             <property name="label" translatable="yes">Connection on start</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -337,7 +337,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="autostart">
+                          <object class="GtkCheckButton" id="app.autostart">
                             <property name="label" translatable="yes">Autostart</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -386,7 +386,7 @@
                     <property name="vadjustment">extra_params_vertical_scroll</property>
                     <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkTextView" id="ssh_extra_options">
+                      <object class="GtkTextView" id="ssh.extra_options">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="vadjustment">extra_params_vertical_scroll</property>
@@ -421,7 +421,7 @@
                     <property name="vadjustment">environ_vertical_scroll</property>
                     <property name="shadow_type">in</property>
                     <child>
-                      <object class="GtkTextView" id="ssh_env_options">
+                      <object class="GtkTextView" id="ssh.env_options">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="vadjustment">environ_vertical_scroll</property>
@@ -511,28 +511,59 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="log_scrolledwindow">
+          <object class="GtkBox">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hadjustment">log_horizontal_scroll</property>
-            <property name="vadjustment">log_vertical_scroll</property>
-            <property name="shadow_type">in</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
             <child>
-              <object class="GtkTextView" id="log_textview">
+              <object class="GtkScrolledWindow" id="log_scrolledwindow">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="margin_left">1</property>
-                <property name="margin_right">1</property>
-                <property name="margin_top">1</property>
-                <property name="margin_bottom">1</property>
                 <property name="hadjustment">log_horizontal_scroll</property>
                 <property name="vadjustment">log_vertical_scroll</property>
-                <property name="wrap_mode">word</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTextView" id="log_textview">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_left">1</property>
+                    <property name="margin_right">1</property>
+                    <property name="margin_top">1</property>
+                    <property name="margin_bottom">1</property>
+                    <property name="hadjustment">log_horizontal_scroll</property>
+                    <property name="vadjustment">log_vertical_scroll</property>
+                    <property name="wrap_mode">word</property>
+                  </object>
+                </child>
               </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="app.log_autoscroll">
+                <property name="label" translatable="yes">Autoscroll</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_autoscroll_checkbox" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
             </child>
           </object>
           <packing>
             <property name="position">1</property>
+            <property name="tab_fill">False</property>
           </packing>
         </child>
         <child type="tab">
@@ -637,7 +668,7 @@
         </child>
       </object>
     </child>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
   </object>

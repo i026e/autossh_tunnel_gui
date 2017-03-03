@@ -33,7 +33,7 @@ debian:
 	dpkg-source --commit
 	debuild -us -uc
 
-arch: $(SOURCES)
+arch: FORCE
 	cd ./arch && makepkg
 
 pot:
@@ -68,4 +68,5 @@ clean:
 	rm -rf locale
 	rm -rf .pc
 
-.PHONY: clean install
+.PHONY: FORCE
+FORCE:

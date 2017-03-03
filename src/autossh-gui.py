@@ -9,6 +9,7 @@ Created on Sun Jun 12 08:25:20 2016
 """
 import os
 import sys
+import json
 
 import time
 import signal
@@ -16,6 +17,11 @@ import signal
 import subprocess
 import threading
 import collections
+
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
 
 
 import gi
@@ -29,7 +35,7 @@ try:
     from gi.repository import AppIndicator3 as appindicator
     USE_APPINDICATOR = True
 except:
-    print("No AppIndicator, using StatusIcon instead")
+    log.info("No AppIndicator, using StatusIcon instead")
 
 #translation
 import locale
@@ -39,51 +45,62 @@ APP = 'autossh-gui'
 
 if os.path.isdir("./locale"):
     locale.bindtextdomain(APP, "./locale")
-
 locale.textdomain(APP)
 
-class Logger(object):
-    #singleton
-    __instance = None
-    def __new__(cls):
-        if Logger.__instance is None:
-            Logger.__instance = object.__new__(cls)
+#signals
+signal.signal(signal.SIGINT, signal.SIG_DFL)  # handle Ctrl-C
+signal.signal(signal.SIGHUP, signal.SIG_DFL)
+signal.signal(signal.SIGTERM, signal.SIG_DFL)
+signal.signal(signal.SIGQUIT, signal.SIG_DFL)
 
-            Logger.__instance.observers = {}
-            Logger.__instance.circular_buffer = collections.deque(maxlen = 100)
-
-        return Logger.__instance
-
+class LogHandler(logging.Handler):
+    def __init__(self, buffer_size = 100):
+        super(LogHandler, self).__init__()
+        self.setFormatter(LogFormatter())
+        self.circular_buffer = collections.deque(maxlen = buffer_size)
+        self.observers = {}
+        
+    def set_buffer_size(self, buffer_size):
+        circular_buffer = collections.deque(maxlen = buffer_size)
+        for i in range(min(buffer_size, len(self.circular_buffer))):
+            #take prev entry and append to the left
+            circular_buffer.appendleft(self.circular_buffer.pop())
+        self.circular_buffer = circular_buffer
+    
+    def emit(self, record):
+        msg = self.format(record)
+        
+        self.circular_buffer.append(msg)
+        self.notify_observers(msg)
+        
     def add_observer(self, obs_name, on_entry_cb):
         self.observers[obs_name] = on_entry_cb
 
     def delete_observer(self, obs_name):
         if obs_name in self.observers:
-            observer_cb = self.observers.pop(obs_name)
-            observer_cb("observer %s unregistered" %obs_name)
+            self.observers.pop(obs_name)
+            log.info("observer %s unregistered", obs_name)
 
     def notify_observers(self, msg):
         for observer_cb in self.observers.values():
             observer_cb(msg)
+            
+    def history(self):
+        return self.circular_buffer
 
-    def decode(self, val):
+class LogFormatter(logging.Formatter):
+    def format(self, record):
+        msg = record.msg        
+        if type(msg) in (list, tuple, set):
+            return " ".join(self.get_str(m) for m in msg)       
+        
+        
+        return self.get_str(msg) % record.args
+    def get_str(self, val):
         if isinstance(val, bytes):
-            val = val.decode("utf-8")
-
-        return str(val)
-
-    def log(self, *args):
-        msg = ' '.join(self.decode(a) for a in args)
-
-        self.circular_buffer.append(msg)
-        self.notify_observers(msg)
-
-    def set_buffer_size(self, keep_entries):
-        circular_buffer = collections.deque(maxlen = keep_entries)
-        for i in range(min(keep_entries, len(self.circular_buffer))):
-            #take prev entry and append to the left
-            circular_buffer.appendleft(self.circular_buffer.pop())
-        self.circular_buffer = circular_buffer
+            return val.decode("utf-8").strip()
+        return str(val).strip()
+        
 
 # decorator for safely update Gtk
 def idle_add_decorator(func):
@@ -91,102 +108,62 @@ def idle_add_decorator(func):
         GObject.idle_add(func, *args)
     return callback
 
-class DefaultPreferences:
-    GUI_GLADE_FILE = "autossh-gui.glade"
-    GUI_ICON_PATH = "./icons"
-    GUI_ICON_THEME = "light"
-    GUI_CREDITS_FILE = "credits.txt"
-
-    CONFIG_FILE = "~/.config/autossh-gui/config.ini"
-    DESKTOP_FILE = "./autossh-gui.desktop"
-    AUTOSTART_FILE = "~/.config/autostart/autossh-gui.desktop"
-
-    AUTOSTART = False
-    CONNECT_ON_START = False
-
-    POLL_INTERVAL = 0.1
-    LOG_KEEP_ENTRIES = 100
-
-    SSH_PROCESS = "autossh"
-    SSH_EXTERNAL_ADDR = "1.2.3.4"
-    SSH_EXTERNAL_PORT = "22"
-    SSH_EXTERNAL_USER = "user"
-    SSH_INTERNAL_PORT = "9999"
-    SSH_KEY_FILE = "~/.ssh/id_pub"
-
-    # -o option
-    SSH_EXTRA_OPTIONS = ["-v -C -T",
-                         "-o TCPKeepAlive=yes",
-                         "-o ServerAliveInterval=300"]
-
-    # export ...
-    SSH_ENV_OPTIONS = ["AUTOSSH_POLL=30",
-                       "AUTOSSH_GATETIME=0",
-                       "AUTOSSH_DEBUG=1",
-                       "AUTOSSH_PORT=0"]
-
 
 class Preferences:
-    option_names = {"glade_file":       ("GUI_GLADE_FILE", str),
-                    "icon_path":        ("GUI_ICON_PATH", str),
-                    "icon_theme":       ("GUI_ICON_THEME", str),
-                    "credits_file":     ("GUI_CREDITS_FILE", str), 
-                    "desktop_file":     ("DESKTOP_FILE", str),
-                    "autostart_file":   ("AUTOSTART_FILE", str),
+    CONFIG_FILE = "~/.config/autossh-gui/config.json"
+    Default = { "files" : {
+                            "glade_file" : "autossh-gui.glade"
+                            ,"icon_path" : "./icons"
+                            ,"credits_file" : "credits.txt"
+                            ,"desktop_file" : "./autossh-gui.desktop"
+                            ,"autostart_file" : "~/.config/autostart/autossh-gui.desktop"
+                        }, "app" : {
+                            "icon_theme" : "light"
+                            ,"autostart" : False
+                            ,"connect_on_start" : False
+                            ,"poll_interval" : 0.1
+                            ,"log_keep_entries" : 100
+                            ,"log_autoscroll" : False
+                        }, "ssh" : {
+                            "process" : "autossh"
+                            ,"external_addr":"1.2.3.4"
+                            ,"external_port":"22"
+                            ,"external_user":"user"
+                            ,"internal_port":"9999"
+                            ,"key_file" :"~/.ssh/id_pub"
+                            ,"extra_options" : ["-v -C -T", "-o TCPKeepAlive=yes","-o ServerAliveInterval=300"]
+                            ,"env_options" : ["AUTOSSH_POLL=30","AUTOSSH_GATETIME=0","AUTOSSH_DEBUG=1","AUTOSSH_PORT=0"]
+                        }
+                    }
 
-                    "autostart":        ("AUTOSTART", bool),
-                    "connect_on_start": ("CONNECT_ON_START", bool),
-                    "poll_interval":    ("POLL_INTERVAL", float),
-                    "log_keep_entries": ("LOG_KEEP_ENTRIES", int),
-
-                    "ssh_process":       ("SSH_PROCESS", str),
-                    "ssh_external_addr": ("SSH_EXTERNAL_ADDR", str),
-                    "ssh_external_port": ("SSH_EXTERNAL_PORT", str),
-                    "ssh_external_user": ("SSH_EXTERNAL_USER", str),
-                    "ssh_internal_port": ("SSH_INTERNAL_PORT", str),
-
-                    "ssh_key_file":         ("SSH_KEY_FILE", str),
-                    "ssh_extra_options":    ("SSH_EXTRA_OPTIONS", list),
-                    "ssh_env_options":      ("SSH_ENV_OPTIONS", list), }
 
 
     def __init__(self, conf_file = None):
-        self.conf_file = DefaultPreferences.CONFIG_FILE \
-            if conf_file is None else conf_file
+        conf_file = conf_file if conf_file else Preferences.CONFIG_FILE
+        self.conf_file = os.path.expanduser(conf_file)
 
-        overwritten = self.load_from_file()
+        self.options = dict((cat, params.copy()) for cat, params in Preferences.Default.items())
+        
+        try:
+            with open(self.conf_file, "r") as f:
+                data = json.loads(f.read())
+            for cat, params in data.items():
+                if cat in self.options:
+                    self.options[cat].update(params)
+                else:
+                    self.options[cat] = params
 
+        except Exception as e:
+            log.exception(e)
 
-        self.options = {}
-
-        for opt_name, (key, _type)  in Preferences.option_names.items():
-            value = overwritten.get(key)
-
-            if value is None:
-                value = DefaultPreferences.__dict__.get(key)
-
-            elif _type not in (list, tuple):
-                try:
-                    value = _type(value[-1])
-                except ValueError as e:
-                    Logger().log("Error reading property {0}: {1}".format(key, e))
-                    value = DefaultPreferences.__dict__.get(key)
-
-            self.options[opt_name] = value
-
-    def __getattr__(self, name):
-        return self.get(name)
-
-    def get(self, name, string_mode=False):
+    def get(self, cat, name, string_mode=False):
+        value = self.options.get(cat, {}).get(name)        
         if string_mode:
-            return self.get_as_str(name)
+            return self.as_str(value)
 
-        return self.options.get(name)
+        return value
 
-
-    def get_as_str(self, name):
-        value = self.get(name)
-
+    def as_str(self, value):
         if value is None:
             return ""
 
@@ -195,73 +172,52 @@ class Preferences:
 
         return str(value)
 
-    def set_raw(self, name, value):
-        if name not in self.option_names:
-            self.options[name] = value
-
+    def set_raw(self, cat, name, value):
+        if cat not in self.options: 
+            self.options[cat] = {}
+            
+        if name not in self.options[cat]:
+            self.options[cat][name] = value
         else: # type conversion
-            key, _type = self.option_names[name]
-
-            if _type not in (list, tuple): # option type is not list
-                try:
-                    self.options[name] = _type(value)
-                except ValueError as e:
-                    Logger().log("Error setting property {0}: {1}".format(name, e))
-            else:
-                if isinstance(value, (list, tuple)):
-                    self.options[name] = _type(value)
-                elif isinstance(value, str):
+            src_type = type(value)
+            target_type = type(self.options[cat][name])
+            
+            try:
+                if (src_type in (str, )) and (target_type in (list, tuple)):                    
                     lines = value.splitlines()
-                    self.options[name] = [line.strip() for line in lines]
+                    self.options[cat][name] = [line.strip() for line in lines]
                 else:
-                    Logger().log("Error setting property {0}: \
-                                        cannot convert to list".format(name))
+                    self.options[cat][name] = target_type(value)
+                    
+            except Exception as e:
+                    log.info("Error setting property %s: %s", name, e)
+                    log.exception(e)
+                    
+    def list_properties(self):
+        for cat, params in self.options.items():
+            for name in params.keys():
+                yield cat, name
 
-
-    def load_from_file(self):
-        params = {}
-
-        config_path = os.path.expanduser(self.conf_file)
-
+    def save(self):       
         try:
-            with open(config_path, "r") as f:
-                for line in f:
-                    line = line.strip()
+            os.makedirs(os.path.dirname(self.conf_file), exist_ok=True)
+            
+            diff = {}
+            for cat, params in self.options.items():
+                diff[cat] = {}
+                for key, val in params.items():                    
+                    if Preferences.Default.get(cat, {}).get(key) != val:
+                        diff[cat][key] = val
+                        
+            log.debug("Changed options %s", diff)
+            with open(self.conf_file, "w") as f:                
+                data = json.dumps(diff, indent=4)
+                f.write(data)
+            log.info("Configuration saved as %s", self.conf_file)
 
-                    if len(line) > 0 and line[0] != "#":
-                        equal_sign_ind = line.find("=")
-                        if equal_sign_ind > 0:
-                            key = line[:equal_sign_ind]
-                            value = line[equal_sign_ind+1:]
-
-                            if key not in params:
-                                params[key] = []
-                            params[key].append(value)
-        except (TypeError, IOError) as e:
-            print("Error reading file {0}: {1}".format(self.conf_file, e))
-
-        return params
-    def save_to_file(self):
-        config_path = os.path.expanduser(self.conf_file)
-
-        try:
-            os.makedirs(os.path.dirname(config_path), exist_ok=True)
-
-            with open(config_path, "w") as f:
-                for option in Preferences.option_names:
-                    key, _type = Preferences.option_names[option]
-                    value = self.options.get(option)
-                    default_value = DefaultPreferences.__dict__.get(key)
-
-                    if value is not None and value != default_value:
-                        if _type not in (list, tuple):
-                            value = [value, ]
-
-                        for v in value:
-                            f.write("{0}={1}\r\n".format(key, str(v)))
-
-        except (TypeError, IOError) as e:
-            print("Error reading file {0}: {1}".format(self.conf_file, e))
+        except Exception as e:
+            log.exception(e)
+            log.info("Error witing file %s: %s", self.conf_file, e)
 
 
 class AutosshClient:
@@ -301,7 +257,7 @@ class AutosshClient:
 
     def run(self, poll_interval, on_stop_cb):
         #Logger().log(self.env)
-        Logger().log(self.command)
+        log.info("Exec %s", self.command)
 
         self.terminated = False
 
@@ -318,29 +274,23 @@ class AutosshClient:
                              args=(poll_interval, on_stop_cb))
             thr.start()
         except (FileNotFoundError, ) as e:
-            Logger().log(e)
+            log.exception(e)
             on_stop_cb(-1)
 
     def poll(self, poll_interval, on_stop_cb):
-        while True:
-            if self.terminated:
-                self.process.terminate()
-                #self.process.kill()
-
-                # Send the signal to all the process groups
-                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
-
+        while True:                
             retcode = self.process.poll()
             if retcode is not None: #Process finished
-                #stdout, stderr = self.process.communicate()
-                Logger().log(self.process.communicate())
+                stdout, stderr = self.process.communicate()
+                log.info("stdout: %s", stdout)
+                log.info("stderr: %s", stderr)
 
                 on_stop_cb(retcode)
-                Logger().log("returned code", retcode)
+                log.info("return code %s", retcode)
 
                 break
             else:
-                Logger().log(self.process.stdout.readline())
+                log.info(self.process.stdout.readline())
 
             time.sleep(poll_interval)
 
@@ -348,6 +298,12 @@ class AutosshClient:
 
     def stop(self):
         self.terminated = True
+        if self.process is not None:
+            self.process.terminate()
+            # Send the signal to all the process groups
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+
+            
 
 
     def get_env(self, environ_options):
@@ -434,8 +390,9 @@ class TaskbarIndicator:
         self.inactive_icon = TaskbarIndicator.INDICATOR_ICON
         self.active_icon = TaskbarIndicator.INDICATOR_ICON
 
-        icon_path = os.path.abspath(self.preferences.icon_path)
-        self.theme_path = os.path.join(icon_path, self.preferences.icon_theme)
+        icon_path = os.path.abspath(self.preferences.get("files", "icon_path"))
+        icon_theme = self.preferences.get("app", "icon_theme")
+        self.theme_path = os.path.join(icon_path, icon_theme)
 
         if os.path.exists(self.theme_path):
             inactive_icon = os.path.join(self.theme_path,
@@ -449,7 +406,7 @@ class TaskbarIndicator:
             if os.path.exists(active_icon):
                 self.active_icon = active_icon
         else:
-            Logger().log("Icon theme path {0} does not exist".format(self.theme_path))
+            log.info("Icon theme path %s does not exist", self.theme_path)
 
     def _set_indicator(self):
         raise NotImplementedError
@@ -519,40 +476,42 @@ class StatusIcon(TaskbarIndicator):
 
 class Autostart:
     @staticmethod
-    def set_autostart(preferences):        
-        desktop_file = os.path.expanduser(preferences.desktop_file)
-        autostart_file = os.path.expanduser(preferences.autostart_file)
-        if preferences.autostart:
+    def set_autostart(preferences):
+        desktop_file = os.path.expanduser(preferences.get("files", "desktop_file"))
+        autostart_file = os.path.expanduser(preferences.get("files", "autostart_file"))
+        if preferences.get("app", "autostart"):
             Autostart.enable(desktop_file, autostart_file)
         else:
             Autostart.disable(autostart_file)
-    
-    @staticmethod    
+
+    @staticmethod
     def enable(desktop_file, autostart_file):
         if os.path.exists(autostart_file):
-            Logger().log(_("Autostart already enabled"))
+            log.info(_("Autostart already enabled"))
             return
-            
+
         try:
             directory = os.path.dirname(autostart_file)
             subprocess.call(["mkdir", "-p", directory])
             subprocess.call(["cp", desktop_file, autostart_file])
-            Logger().log(_("Autostart enabled"))
+            log.info(_("Autostart enabled"))
         except Exception as e:
-            Logger().log("Problem with copying autostart file:", e)
-    
-    @staticmethod        
+            log.info("Problem with copying autostart file: %s", e)
+            log.exception(e)
+
+    @staticmethod
     def disable(autostart_file):
         if not os.path.exists(autostart_file):
-            Logger().log(_("Autostart already disabled"))
+            log.info(_("Autostart already disabled"))
             return
-        
+
         try:
             os.remove(autostart_file)
-            Logger().log(_("Autostart disbled"))
+            log.info(_("Autostart disbled"))
         except Exception as e:
-            Logger().log("Problem with deleting autostart file:", e)
-        
+            log.info("Problem with deleting autostart file: %s", e)
+            log.exception(e)
+
 
 
 class GUI_callback:
@@ -560,17 +519,13 @@ class GUI_callback:
         self.gui = gui
         self.preferences = preferences
 
-    def on_window_hide(self, window, event):
-        Logger().delete_observer("log_textview")
-        return window.hide() or True
-
     def on_button_cancel_clicked(self, *args):
-        Logger().log(_("Settings restored"))
+        log.info(_("Settings restored"))
         self.gui.pref_fields_to_window()
-        
+
 
     def on_button_ok_clicked(self, *args):
-        Logger().log(_("Settings saved"))
+        log.info(_("Settings saved"))
         self.gui.pref_fields_from_window()
         Autostart.set_autostart(self.preferences)
 
@@ -585,6 +540,10 @@ class GUI_callback:
 
     def on_show_log(self, source):
         self.gui.show_window("log")
+        
+    def on_autoscroll_checkbox(self, widget):
+        state = widget.get_active()
+        self.preferences.set_raw("app", "log_autoscroll", state)
 
 
 
@@ -592,23 +551,23 @@ class GUI:
     NOTEBOOK_PAGES = {"options": 0, "log":1, "about":2}
 
     def __init__(self, conf_file = None):
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
         self.window = None
         self.ssh_client = None
 
         self.preferences = Preferences(conf_file)
-        Logger().set_buffer_size(self.preferences.log_keep_entries)
+        self.log_handler = LogHandler(self.preferences.get("app","log_keep_entries"))
+        log.addHandler(self.log_handler)
 
         self.callback = GUI_callback(self, self.preferences)
 
         indicator = APP_Indicator if USE_APPINDICATOR else StatusIcon
         self.indicator = indicator(self.preferences, self.callback)
-        
+
         Autostart.set_autostart(self.preferences)
 
 
     def run(self):
-        if self.preferences.connect_on_start:
+        if self.preferences.get("app", "connect_on_start"):
             self.connect()
 
         Gtk.main()
@@ -625,16 +584,16 @@ class GUI:
 
     def connect(self):
         if self.ssh_client is None:
-            self.ssh_client = AutosshClient(self.preferences.ssh_process,
-                                            self.preferences.ssh_external_addr,
-                                            self.preferences.ssh_external_port,
-                                            self.preferences.ssh_external_user,
-                                            self.preferences.ssh_internal_port,
-                                            self.preferences.ssh_key_file,
-                                            self.preferences.ssh_extra_options,
-                                            self.preferences.ssh_env_options)
+            self.ssh_client = AutosshClient(self.preferences.get("ssh","process"),
+                                            self.preferences.get("ssh","external_addr"),
+                                            self.preferences.get("ssh","external_port"),
+                                            self.preferences.get("ssh","external_user"),
+                                            self.preferences.get("ssh","internal_port"),
+                                            self.preferences.get("ssh","key_file"),
+                                            self.preferences.get("ssh","extra_options"),
+                                            self.preferences.get("ssh","env_options"))
 
-            self.ssh_client.run(self.preferences.poll_interval,
+            self.ssh_client.run(self.preferences.get("app", "poll_interval"),
                                 self.on_stop_cb)
         self.indicator.mode_active()
 
@@ -648,13 +607,13 @@ class GUI:
         if self.window is None:
             self.builder = Gtk.Builder()
             self.builder.set_translation_domain(APP)
-            self.builder.add_from_file(self.preferences.glade_file)
+            self.builder.add_from_file(self.preferences.get("files", "glade_file"))
             self.builder.connect_signals(self.callback)
 
             self.window = self.builder.get_object("window")
 
             # hide instead of close
-            self.window.connect('delete-event', self.callback.on_window_hide)
+            self.window.connect('delete-event', self.hide_window)
 
             #tabs
             self.notebook = self.builder.get_object("notebook")
@@ -668,17 +627,22 @@ class GUI:
 
         self.pref_fields_to_window()
 
-        self.log_buffer.set_text("".join(Logger().circular_buffer))
-        Logger().add_observer("log_textview", self.on_new_log_msg)
+        self.log_buffer.set_text("\n".join(self.log_handler.history()))
+        self.log_handler.add_observer("log_textview", self.on_new_log_msg)
 
         self.window.show_all()
         self.window.present()
 
         open_page = GUI.NOTEBOOK_PAGES.get(notebook_page, 0)
         self.notebook.set_current_page(open_page)
+        
+    def hide_window(self, *args):
+        if self.window:
+            self.window.hide()
+        return True
 
     def set_credits(self):
-        credits_file = self.preferences.credits_file
+        credits_file = self.preferences.get("files", "credits_file")
 
         try:
             with open(credits_file, "r") as cf:
@@ -686,31 +650,30 @@ class GUI:
                 credits_buffer = credits_view.get_buffer()
                 credits_buffer.set_text(cf.read())
         except (TypeError, IOError) as e:
-            Logger().log(e)
-
+            log.exception(e)
 
     # from
     def pref_fields_from_window(self):
-        for option_name in self.preferences.options:
-            field = self.builder.get_object(option_name)
+        for cat, name in self.preferences.list_properties():
+            field = self.builder.get_object(cat + "." + name)
 
             if field is not None:
-                read, write, s_mode = self._pref_field_rw_func(field)
+                read, write, s_mode = self.get_rw_func(field)
                 if read is not None:
-                    self.preferences.set_raw(option_name, read())
-        self.preferences.save_to_file()
+                    self.preferences.set_raw(cat, name, read())
+        self.preferences.save()        
 
     def pref_fields_to_window(self):
-        for option_name in self.preferences.options:
-            field = self.builder.get_object(option_name)
+        for cat, name in self.preferences.list_properties():
+            field = self.builder.get_object(cat + "." + name)
 
             if field is not None:
-                read, write, s_mode = self._pref_field_rw_func(field)
+                read, write, s_mode = self.get_rw_func(field)
                 if write is not None:
-                    write(self.preferences.get(option_name, s_mode))
+                    write(self.preferences.get(cat, name, s_mode))
 
 
-    def _pref_field_rw_func(self, field):
+    def get_rw_func(self, field):
         # returns:
         # -read function for field
         # -write function for field
@@ -753,9 +716,12 @@ class GUI:
     def on_new_log_msg(self, msg):
         end_iter = self.log_buffer.get_end_iter()
         self.log_buffer.insert(end_iter, "\n" + msg)
+        
+        if self.preferences.get("app", "log_autoscroll"):
+            self.log_textview.scroll_mark_onscreen(self.log_buffer.get_insert())
 
     def on_stop_cb(self, code=0):
-        Logger().log("code", code)
+        log.info("SSH stopped with code %s", code)
         if self.ssh_client is not None:
             self.ssh_client.stop()
             self.ssh_client = None
@@ -767,9 +733,7 @@ class GUI:
         Gtk.main_quit()
 
 
-if __name__ == "__main__":
-    Logger().add_observer("print", print)
-
+if __name__ == "__main__":   
     conf_file = sys.argv[1] if len(sys.argv) >= 2 else None
 
     GUI(conf_file).run()
