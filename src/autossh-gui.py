@@ -59,20 +59,20 @@ class LogHandler(logging.Handler):
         self.setFormatter(LogFormatter())
         self.circular_buffer = collections.deque(maxlen = buffer_size)
         self.observers = {}
-        
+
     def set_buffer_size(self, buffer_size):
         circular_buffer = collections.deque(maxlen = buffer_size)
         for i in range(min(buffer_size, len(self.circular_buffer))):
             #take prev entry and append to the left
             circular_buffer.appendleft(self.circular_buffer.pop())
         self.circular_buffer = circular_buffer
-    
+
     def emit(self, record):
         msg = self.format(record)
-        
+
         self.circular_buffer.append(msg)
         self.notify_observers(msg)
-        
+
     def add_observer(self, obs_name, on_entry_cb):
         self.observers[obs_name] = on_entry_cb
 
@@ -84,23 +84,23 @@ class LogHandler(logging.Handler):
     def notify_observers(self, msg):
         for observer_cb in self.observers.values():
             observer_cb(msg)
-            
+
     def history(self):
         return self.circular_buffer
 
 class LogFormatter(logging.Formatter):
     def format(self, record):
-        msg = record.msg        
+        msg = record.msg
         if type(msg) in (list, tuple, set):
-            return " ".join(self.get_str(m) for m in msg)       
-        
-        
+            return " ".join(self.get_str(m) for m in msg)
+
+
         return self.get_str(msg) % record.args
     def get_str(self, val):
         if isinstance(val, bytes):
             return val.decode("utf-8").strip()
         return str(val).strip()
-        
+
 
 # decorator for safely update Gtk
 def idle_add_decorator(func):
@@ -131,7 +131,7 @@ class Preferences:
                             ,"external_user":"user"
                             ,"internal_port":"9999"
                             ,"key_file" :"~/.ssh/id_pub"
-                            ,"extra_options" : ["-v -C -T", "-o TCPKeepAlive=yes","-o ServerAliveInterval=300"]
+                            ,"extra_options" : ["-v -C -N -T", "-o TCPKeepAlive=yes","-o ServerAliveInterval=300"]
                             ,"env_options" : ["AUTOSSH_POLL=30","AUTOSSH_GATETIME=0","AUTOSSH_DEBUG=1","AUTOSSH_PORT=0"]
                         }
                     }
@@ -143,7 +143,7 @@ class Preferences:
         self.conf_file = os.path.expanduser(conf_file)
 
         self.options = dict((cat, params.copy()) for cat, params in Preferences.Default.items())
-        
+
         try:
             with open(self.conf_file, "r") as f:
                 data = json.loads(f.read())
@@ -157,7 +157,7 @@ class Preferences:
             log.exception(e)
 
     def get(self, cat, name, string_mode=False):
-        value = self.options.get(cat, {}).get(name)        
+        value = self.options.get(cat, {}).get(name)
         if string_mode:
             return self.as_str(value)
 
@@ -173,44 +173,44 @@ class Preferences:
         return str(value)
 
     def set_raw(self, cat, name, value):
-        if cat not in self.options: 
+        if cat not in self.options:
             self.options[cat] = {}
-            
+
         if name not in self.options[cat]:
             self.options[cat][name] = value
         else: # type conversion
             src_type = type(value)
             target_type = type(self.options[cat][name])
-            
+
             try:
-                if (src_type in (str, )) and (target_type in (list, tuple)):                    
+                if (src_type in (str, )) and (target_type in (list, tuple)):
                     lines = value.splitlines()
                     self.options[cat][name] = [line.strip() for line in lines]
                 else:
                     self.options[cat][name] = target_type(value)
-                    
+
             except Exception as e:
                     log.info("Error setting property %s: %s", name, e)
                     log.exception(e)
-                    
+
     def list_properties(self):
         for cat, params in self.options.items():
             for name in params.keys():
                 yield cat, name
 
-    def save(self):       
+    def save(self):
         try:
             os.makedirs(os.path.dirname(self.conf_file), exist_ok=True)
-            
+
             diff = {}
             for cat, params in self.options.items():
                 diff[cat] = {}
-                for key, val in params.items():                    
+                for key, val in params.items():
                     if Preferences.Default.get(cat, {}).get(key) != val:
                         diff[cat][key] = val
-                        
+
             log.debug("Changed options %s", diff)
-            with open(self.conf_file, "w") as f:                
+            with open(self.conf_file, "w") as f:
                 data = json.dumps(diff, indent=4)
                 f.write(data)
             log.info("Configuration saved as %s", self.conf_file)
@@ -278,7 +278,7 @@ class AutosshClient:
             on_stop_cb(-1)
 
     def poll(self, poll_interval, on_stop_cb):
-        while True:                
+        while True:
             retcode = self.process.poll()
             if retcode is not None: #Process finished
                 stdout, stderr = self.process.communicate()
@@ -303,7 +303,7 @@ class AutosshClient:
             # Send the signal to all the process groups
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
 
-            
+
 
 
     def get_env(self, environ_options):
@@ -540,7 +540,7 @@ class GUI_callback:
 
     def on_show_log(self, source):
         self.gui.show_window("log")
-        
+
     def on_autoscroll_checkbox(self, widget):
         state = widget.get_active()
         self.preferences.set_raw("app", "log_autoscroll", state)
@@ -635,7 +635,7 @@ class GUI:
 
         open_page = GUI.NOTEBOOK_PAGES.get(notebook_page, 0)
         self.notebook.set_current_page(open_page)
-        
+
     def hide_window(self, *args):
         if self.window:
             self.window.hide()
@@ -661,7 +661,7 @@ class GUI:
                 read, write, s_mode = self.get_rw_func(field)
                 if read is not None:
                     self.preferences.set_raw(cat, name, read())
-        self.preferences.save()        
+        self.preferences.save()
 
     def pref_fields_to_window(self):
         for cat, name in self.preferences.list_properties():
@@ -716,7 +716,7 @@ class GUI:
     def on_new_log_msg(self, msg):
         end_iter = self.log_buffer.get_end_iter()
         self.log_buffer.insert(end_iter, "\n" + msg)
-        
+
         if self.preferences.get("app", "log_autoscroll"):
             self.log_textview.scroll_mark_onscreen(self.log_buffer.get_insert())
 
@@ -733,7 +733,7 @@ class GUI:
         Gtk.main_quit()
 
 
-if __name__ == "__main__":   
+if __name__ == "__main__":
     conf_file = sys.argv[1] if len(sys.argv) >= 2 else None
 
     GUI(conf_file).run()
