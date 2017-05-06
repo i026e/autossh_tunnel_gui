@@ -18,8 +18,8 @@ install: translations
 
 	install -D -m 0755 "./src/files/autossh-gui" "$(DESTDIR)usr/bin/$(PACKAGE)"
 
-	cp "./src/*.py" "$(DESTDIR)usr/share/$(PACKAGE)/"
-	cp "./src/*.glade" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp ./src/*.py "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp ./src/*.glade "$(DESTDIR)usr/share/$(PACKAGE)/"
 
 	cp -r "./src/icons" "$(DESTDIR)usr/share/$(PACKAGE)/"
 	cp -r "./src/files" "$(DESTDIR)usr/share/$(PACKAGE)/"
