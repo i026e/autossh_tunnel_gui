@@ -12,4 +12,4 @@ Package: autossh-gui
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, autossh, python3
 Description: GUI for autossh
- Add icon to tray to control autossh
+ Tray icon to control autossh
