@@ -212,8 +212,8 @@ class GUI:
 
     def on_ssh_stop(self, profile_id, code=0):
         name = self.preferences.get("ssh_profiles", profile_id, "name", string_mode=True)
-        log.info(_("SSH %s has stopped"), name, code)
-        log.info(_("return code"), code)
+        log.info(_("SSH %s has stopped"), name)
+        log.info(_("return code %s"), code)
 
         if profile_id in self.active_profiles:
             self.active_profiles.pop(profile_id)

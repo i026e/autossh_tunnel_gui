@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: autossh-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-06 18:31+0300\n"
+"POT-Creation-Date: 2017-05-06 19:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,11 +30,11 @@ msgstr "О программе"
 msgid "Active"
 msgstr "Активен"
 
-#: src/autossh_gui.py:221
+#: src/autossh_gui.py:223
 msgid "Adding new profile"
 msgstr "Добавление нового профиля"
 
-#: src/autossh_gui.py:232
+#: src/autossh_gui.py:234
 #, python-brace-format
 msgid "Are you sure to delete profile '{0}'?"
 msgstr "Действительно удалить профиль '{0}'?"
@@ -67,7 +67,7 @@ msgstr "Автозапуск разрешен"
 msgid "Connect when application starts"
 msgstr "Подключаться при запуске приложения"
 
-#: src/autossh_gui.py:66
+#: src/autossh_gui.py:68
 #, python-format
 msgid "Connecting %s"
 msgstr "Подключение к %s"
@@ -76,17 +76,17 @@ msgstr "Подключение к %s"
 msgid "Dark"
 msgstr "Темная"
 
-#: src/autossh_gui.py:228
+#: src/autossh_gui.py:230
 #, python-format
 msgid "Deleting profile %s"
 msgstr "Удаление профиля %s"
 
-#: src/autossh_gui.py:85
+#: src/autossh_gui.py:87
 #, python-format
 msgid "Disconnecting %s"
 msgstr "Отлючение от %s"
 
-#: src/autossh_gui.py:239
+#: src/autossh_gui.py:241
 #, python-format
 msgid "Editing profile %s"
 msgstr "Редактирование профиля %s"
@@ -128,21 +128,21 @@ msgstr "Локальный порт"
 msgid "Log"
 msgstr "Журнал"
 
-#: src/autossh_gui.py:276
+#: src/autossh_gui.py:278
 msgid "Log autoscroll toggled"
 msgstr "Автопрокрутка лога изменена"
 
-#: src/autossh_gui.py:75
+#: src/autossh_gui.py:77
 #, python-format
 msgid "No SSH profile with id %s"
 msgstr "Нет SSH профиля c id %s"
 
-#: src/autossh_gui.py:90
+#: src/autossh_gui.py:92
 #, python-format
 msgid "No active SSH profile with id %s"
 msgstr "Нет активного SSH профиля c id %s"
 
-#: src/autossh_gui.py:235 src/autossh_gui.py:244
+#: src/autossh_gui.py:237 src/autossh_gui.py:246
 #, python-format
 msgid "No such profile %s"
 msgstr "Нет такого профиля %s"
@@ -164,19 +164,14 @@ msgstr "Редактор профилей"
 msgid "Profile name"
 msgstr "Имя профиля"
 
-#: src/autossh_gui.py:194 src/autossh_indicator.py:59
+#: src/autossh_gui.py:196 src/autossh_indicator.py:59
 msgid "Quit"
 msgstr "Выход"
 
-#: src/autossh_gui.py:213
+#: src/autossh_gui.py:215
 #, python-format
 msgid "SSH %s has stopped"
 msgstr "SSH %s остановлен"
-
-#: src/autossh_preferences.py:48
-#, python-brace-format
-msgid "SSH Profile {0}"
-msgstr "SSH Профиль {0}"
 
 #: src/autossh-gui.glade:155
 msgid "SSH Profiles"
@@ -186,7 +181,7 @@ msgstr "SSH профили"
 msgid "SSH auth file"
 msgstr "Файл авторизации SSH"
 
-#: src/autossh_gui.py:248
+#: src/autossh_gui.py:250
 msgid "Saving settings"
 msgstr "Сохранение настроек"
 
@@ -214,6 +209,7 @@ msgstr "Отображать в меню"
 msgid "autossh-gui"
 msgstr ""
 
-#: src/autossh_gui.py:214
-msgid "return code"
+#: src/autossh_gui.py:216
+#, fuzzy, python-format
+msgid "return code %s"
 msgstr "код возврата"
