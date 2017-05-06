@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: autossh-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-03 17:23+0300\n"
+"POT-Creation-Date: 2017-05-06 18:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,143 +17,203 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/autossh-gui.glade:661
+#: src/autossh_profile_view.py:78
+#, python-brace-format
+msgid "<b>{name}:</b> 127.0.0.1:{loc_port} &lt;-&gt; {serv_addr}:{serv_port}"
+msgstr ""
+
+#: src/autossh-gui.glade:415
 msgid "About"
 msgstr "О программе"
 
-#: src/autossh-gui.py:328
-msgid "Action"
-msgstr "Действие"
-
-#: src/autossh-gui.py:373
+#: src/autossh_profile_view.py:148
 msgid "Active"
 msgstr "Активен"
 
-#: src/autossh-gui.glade:610
+#: src/autossh_gui.py:221
+msgid "Adding new profile"
+msgstr "Добавление нового профиля"
+
+#: src/autossh_gui.py:232
+#, python-brace-format
+msgid "Are you sure to delete profile '{0}'?"
+msgstr "Действительно удалить профиль '{0}'?"
+
+#: src/autossh-gui.glade:366
 msgid "AutoSSH Tunnel Control"
 msgstr "Управление AutoSSH"
 
-#: src/autossh-gui.glade:550
+#: src/autossh-gui.glade:306
 msgid "Autoscroll"
 msgstr "Прокручивать"
 
-#: src/autossh-gui.glade:341
-msgid "Autostart"
-msgstr "Автозапуск"
-
-#: src/autossh-gui.py:505
+#: src/app_autostart.py:45
 msgid "Autostart already disabled"
 msgstr "Автозапуск уже отключен"
 
-#: src/autossh-gui.py:490
+#: src/app_autostart.py:30
 msgid "Autostart already enabled"
 msgstr "Автозапуск уже разрешен"
 
-#: src/autossh-gui.py:510
+#: src/app_autostart.py:50
 msgid "Autostart disbled"
 msgstr "Автозапуск отключен"
 
-#: src/autossh-gui.py:497
+#: src/app_autostart.py:37
 msgid "Autostart enabled"
 msgstr "Автозапуск разрешен"
 
-#: src/autossh-gui.glade:327
-msgid "Connection on start"
-msgstr "Подключаться при запуске"
+#: src/autossh-editor.glade:216
+msgid "Connect when application starts"
+msgstr "Подключаться при запуске приложения"
 
-#: src/autossh-gui.glade:35
+#: src/autossh_gui.py:66
+#, python-format
+msgid "Connecting %s"
+msgstr "Подключение к %s"
+
+#: src/autossh-gui.glade:15
 msgid "Dark"
 msgstr "Темная"
 
-#: src/autossh-gui.glade:436
+#: src/autossh_gui.py:228
+#, python-format
+msgid "Deleting profile %s"
+msgstr "Удаление профиля %s"
+
+#: src/autossh_gui.py:85
+#, python-format
+msgid "Disconnecting %s"
+msgstr "Отлючение от %s"
+
+#: src/autossh_gui.py:239
+#, python-format
+msgid "Editing profile %s"
+msgstr "Редактирование профиля %s"
+
+#: src/autossh-editor.glade:342
 msgid "Environment Options"
 msgstr "Переменные Окружения"
 
-#: src/autossh-gui.glade:401
+#: src/autossh-editor.glade:309
 msgid "Extra Options"
 msgstr "Дополнительно"
 
-#: src/autossh-gui.glade:298
-msgid "Icon theme (restart required)"
-msgstr "Иконка (нужен перезапуск)"
+#: src/autossh_profile_view.py:130
+#, python-format
+msgid "Force toggle %s"
+msgstr "Переключение %s"
 
-#: src/autossh-gui.py:377
-msgid "Inactive"
-msgstr "Неактивен"
+#: src/autossh-gui.glade:177
+msgid "Icon theme"
+msgstr "Тема иконки"
 
-#: src/autossh-gui.glade:39
+#: src/autossh_profile_view.py:148
+msgid "Is connected"
+msgstr "Подключено"
+
+#: src/autossh-gui.glade:215
+msgid "Launch app on system start up"
+msgstr "Запускать приложение при запуске системы"
+
+#: src/autossh-gui.glade:19
 msgid "Light"
 msgstr "Светлая"
 
-#: src/autossh-gui.glade:286
+#: src/autossh-editor.glade:194
 msgid "Local Port"
 msgstr "Локальный порт"
 
-#: src/autossh-gui.glade:360
-msgid "Local Settings"
-msgstr "Локальные настройки"
-
-#: src/autossh-gui.py:333 src/autossh-gui.glade:573
+#: src/autossh_indicator.py:54 src/autossh-gui.glade:329
 msgid "Log"
 msgstr "Журнал"
 
-#: src/autossh-gui.py:332
+#: src/autossh_gui.py:276
+msgid "Log autoscroll toggled"
+msgstr "Автопрокрутка лога изменена"
+
+#: src/autossh_gui.py:75
+#, python-format
+msgid "No SSH profile with id %s"
+msgstr "Нет SSH профиля c id %s"
+
+#: src/autossh_gui.py:90
+#, python-format
+msgid "No active SSH profile with id %s"
+msgstr "Нет активного SSH профиля c id %s"
+
+#: src/autossh_gui.py:235 src/autossh_gui.py:244
+#, python-format
+msgid "No such profile %s"
+msgstr "Нет такого профиля %s"
+
+#: src/autossh_log.py:69
+#, python-format
+msgid "Observer %s unregistered"
+msgstr "Наблюдатель %s отключен"
+
+#: src/autossh_indicator.py:51
 msgid "Options"
 msgstr "Настройки"
 
-#: src/autossh-gui.py:337
+#: src/autossh-editor.glade:7
+msgid "Profile Editor"
+msgstr "Редактор профилей"
+
+#: src/autossh_profile_view.py:151 src/autossh-editor.glade:74
+msgid "Profile name"
+msgstr "Имя профиля"
+
+#: src/autossh_gui.py:194 src/autossh_indicator.py:59
 msgid "Quit"
 msgstr "Выход"
 
-#: src/autossh-gui.glade:143
+#: src/autossh_gui.py:213
+#, python-format
+msgid "SSH %s has stopped"
+msgstr "SSH %s остановлен"
+
+#: src/autossh_preferences.py:48
+#, python-brace-format
+msgid "SSH Profile {0}"
+msgstr "SSH Профиль {0}"
+
+#: src/autossh-gui.glade:155
+msgid "SSH Profiles"
+msgstr "SSH профили"
+
+#: src/autossh-editor.glade:121
 msgid "SSH auth file"
 msgstr "Файл авторизации SSH"
 
-#: src/autossh-gui.glade:108
+#: src/autossh_gui.py:248
+msgid "Saving settings"
+msgstr "Сохранение настроек"
+
+#: src/autossh-editor.glade:97
 msgid "Server Addr"
 msgstr "Адрес сервера"
 
-#: src/autossh-gui.glade:169
+#: src/autossh-editor.glade:168
 msgid "Server Port"
 msgstr "Порт сервера"
 
-#: src/autossh-gui.glade:240
-msgid "Server Settings"
-msgstr "Настройки сервера"
-
-#: src/autossh-gui.glade:131
+#: src/autossh-editor.glade:145
 msgid "Server User"
 msgstr "Пользователь"
 
-#: src/autossh-gui.glade:506
+#: src/autossh-gui.glade:266
 msgid "Settings"
 msgstr "Настройки"
 
-#: src/autossh-gui.py:523
-msgid "Settings restored"
-msgstr "Настройки восстановлены"
+#: src/autossh-editor.glade:231
+msgid "Show in menu"
+msgstr "Отображать в меню"
 
-#: src/autossh-gui.py:528
-msgid "Settings saved"
-msgstr "Настройки сохранены"
-
-#: src/autossh-gui.py:378
-msgid "Start"
-msgstr "Запустить"
-
-#: src/autossh-gui.py:326
-msgid "Status"
-msgstr "Статус"
-
-#: src/autossh-gui.py:326
-#, python-brace-format
-msgid "Status: {0}"
-msgstr "Статус: {0}"
-
-#: src/autossh-gui.py:374
-msgid "Stop"
-msgstr "Остановить"
-
-#: src/autossh-gui.glade:55
+#: src/autossh-gui.glade:25
 msgid "autossh-gui"
 msgstr ""
+
+#: src/autossh_gui.py:214
+msgid "return code"
+msgstr "код возврата"

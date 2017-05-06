@@ -1,2 +1,6 @@
 # autossh_tunnel_gui
-GUI for SSH Tunnel Using Autossh
+GUI for Autossh
+
+Icons made by OCHA ( http://www.flaticon.com/authors/ocha )
+from www.flaticon.com
+is licensed by Creative Commons BY 3.0

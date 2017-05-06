@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cd /usr/share/autossh-gui/
-./autossh-gui.py

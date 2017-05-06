@@ -1,7 +1,7 @@
 export SHELL = sh
 
 PACKAGE = autossh-gui
-SOURCES = ./src/autossh-gui.*
+SOURCES = ./src/*.*
 
 ifndef DESTDIR
 	DESTDIR = "./debian/$(PACKAGE)/"
@@ -16,17 +16,17 @@ install: translations
 	mkdir -p "$(DESTDIR)usr/share/$(PACKAGE)/"
 	mkdir -p "$(DESTDIR)usr/share/applications/"
 
-	install -D -m 0755 "./src/autossh-gui" "$(DESTDIR)usr/bin/$(PACKAGE)"
+	install -D -m 0755 "./src/files/autossh-gui" "$(DESTDIR)usr/bin/$(PACKAGE)"
 
-	cp "./src/autossh-gui.py" "$(DESTDIR)usr/share/$(PACKAGE)/"
-	cp "./src/autossh-gui.glade" "$(DESTDIR)usr/share/$(PACKAGE)/"
-	cp "./credits.txt" "$(DESTDIR)usr/share/$(PACKAGE)/"
-	cp -r "./icons" "$(DESTDIR)usr/share/$(PACKAGE)/"
-	cp "./src/autossh-gui.desktop" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp "./src/*.py" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp "./src/*.glade" "$(DESTDIR)usr/share/$(PACKAGE)/"
 
-	cp "./src/autossh-gui.desktop" "$(DESTDIR)usr/share/applications/"
+	cp -r "./src/icons" "$(DESTDIR)usr/share/$(PACKAGE)/"
+	cp -r "./src/files" "$(DESTDIR)usr/share/$(PACKAGE)/"
 
-	cp -r locale "$(DESTDIR)usr/share"
+	cp "./src/files/autossh-gui.desktop" "$(DESTDIR)usr/share/applications/"
+
+	cp -r "./locale" "$(DESTDIR)usr/share"
 
 debian:
 	dh_make --createorig -y -s

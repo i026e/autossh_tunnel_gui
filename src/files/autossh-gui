@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+cd /usr/share/autossh-gui/
+python3 ./autossh_gui.py
