@@ -57,8 +57,10 @@ class GUI:
 
 
     def run(self):
-        #if self.preferences.get("app", "connect_on_start"):
-        #    self.connect()
+        profiles = [(p.get("id"), p) for (k, p) in self.preferences.list_parameters("ssh_profiles")]
+        for profile_id, profile in profiles:
+            if profile.get("autostart", False):
+                self.connect(profile_id)
 
         Gtk.main()
 
