@@ -73,9 +73,6 @@ class AutosshClient:
 
 
     def background(self, poll_interval, on_stop_cb):
-        retcode = None
-
-
         try:
             # start
             self.process = subprocess.Popen(self.command,
@@ -95,17 +92,18 @@ class AutosshClient:
             log.info("%s:stdout: %s", self.prof_name, stdout)
             log.info("%s:stderr: %s", self.prof_name, stderr)
 
-            retcode = self.process.returncode
+        except subprocess.TimeoutExpired as e:
+            log.exception(e)
+            self.stop()
 
         except Exception as e:
             log.exception(e)
             log.info("%s:unexpected error: %s", self.prof_name, str(e))
 
         finally:
-            on_stop_cb(self.prof_id, retcode)
-            log.info("%s:return code %s", self.prof_name, retcode)
+            on_stop_cb(self.prof_id, self.process.returncode)
+            log.info("%s:return code %s", self.prof_name, self.process.returncode)
 
-            self.stop()
             self.process = None
 
 
