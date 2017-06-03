@@ -86,18 +86,16 @@ class AutosshClient:
                                             preexec_fn=os.setsid)
 
             # poll
-            while True:
-                if (self.process is None) or (retcode is not None):
-                    break
-                try:
-                    stdout, stderr = self.process.communicate(timeout=poll_interval)
-                    log.info("%s:stdout: %s", self.prof_name, stdout)
-                    log.info("%s:stderr: %s", self.prof_name, stderr)
+            while self.process.poll() is None:
+                log.info("%s: %s", self.prof_name, self.process.stdout.readline())
+                sleep(poll_interval)
 
-                    retcode = self.process.returncode
+            # stop
+            stdout, stderr = self.process.communicate(timeout=poll_interval)
+            log.info("%s:stdout: %s", self.prof_name, stdout)
+            log.info("%s:stderr: %s", self.prof_name, stderr)
 
-                except subprocess.TimeoutExpired:
-                    log.info("%s:stdout: %s", self.prof_name, self.process.stdout.read())
+            retcode = self.process.returncode
 
         except Exception as e:
             log.exception(e)
