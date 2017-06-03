@@ -97,7 +97,7 @@ class AutosshClient:
                     retcode = self.process.returncode
 
                 except subprocess.TimeoutExpired:
-                    pass
+                    log.info("%s:stdout: %s", self.prof_name, self.process.stdout.read())
 
         except Exception as e:
             log.exception(e)
