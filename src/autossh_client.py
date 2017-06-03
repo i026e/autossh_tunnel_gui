@@ -76,11 +76,14 @@ class AutosshClient:
         try:
             # start
             self.process = subprocess.Popen(self.command,
-                                            env=self.env,
+                                            universal_newlines=True,  #text mode
+                                            bufsize=1,  # line buffered
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT,
-                                            preexec_fn=os.setsid)
+                                            env=self.env,  # environment
+                                            preexec_fn=os.setsid  #to modify the environment
+                                            )
 
             # poll
             while self.process.poll() is None:
