@@ -6,7 +6,7 @@
 # Maintainer: Pavel Klevakin klev.paul@gmail.com
 pkgname=autossh-gui
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 epoch=
 pkgdesc=""
 arch=( "any" )

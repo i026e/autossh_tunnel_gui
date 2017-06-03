@@ -60,52 +60,65 @@ class AutosshClient:
 
     def run(self, poll_interval, on_stop_cb):
         #Logger().log(self.env)
-        log.info("%s:exec %s", self.prof_name, self.command)
-
-        self.terminated = False
+        log.info("%s: %s", self.prof_name, self.command)
 
         try :
-            thr = Thread(target=self.poll,
+            thr = Thread(target=self.background,
                              args=(poll_interval, on_stop_cb))
             thr.start()
-        except (FileNotFoundError, ) as e:
+        except Exception as e:
             log.exception(e)
-            log.debug("%s:exception: %s", self.prof_name, str(e))
-            on_stop_cb(-1)
+            log.info("%s:unexpected error: %s", self.prof_name, str(e))
+            on_stop_cb(self.prof_id, -1)
 
-    def poll(self, poll_interval, on_stop_cb):
-        self.process = subprocess.Popen(self.command,
-                                        env=self.env,
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT,
-                                        preexec_fn=os.setsid)
 
-        while True:
-            retcode = self.process.poll()
-            if retcode is not None: #Process finished
-                stdout, stderr = self.process.communicate()
-                log.info("%s:stdout: %s", self.prof_name, stdout)
-                log.info("%s:stderr: %s", self.prof_name, stderr)
+    def background(self, poll_interval, on_stop_cb):
+        retcode = None
 
-                on_stop_cb(self.prof_id, retcode)
-                log.info("%s:return code %s", self.prof_name, retcode)
 
-                break
-            else:
-                log.info(self.process.stdout.readline())
+        try:
+            # start
+            self.process = subprocess.Popen(self.command,
+                                            env=self.env,
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT,
+                                            preexec_fn=os.setsid)
 
-            sleep(poll_interval)
+            # poll
+            while True:
+                if (self.process is None) or (retcode is not None):
+                    break
+                try:
+                    stdout, stderr = self.process.communicate(timeout=poll_interval)
+                    log.info("%s:stdout: %s", self.prof_name, stdout)
+                    log.info("%s:stderr: %s", self.prof_name, stderr)
 
+                    retcode = self.process.returncode
+
+                except subprocess.TimeoutExpired:
+                    pass
+
+        except Exception as e:
+            log.exception(e)
+            log.info("%s:unexpected error: %s", self.prof_name, str(e))
+
+        finally:
+            on_stop_cb(self.prof_id, retcode)
+            log.info("%s:return code %s", self.prof_name, retcode)
+
+            self.stop()
+            self.process = None
 
 
     def stop(self):
-        self.terminated = True
-        if self.process is not None:
+        if self.is_active():
             self.process.terminate()
             # Send the signal to all the process groups
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
 
+    def is_active(self):
+        return self.process is not None
 
     def get_env(self, environ_options):
         env = os.environ.copy()

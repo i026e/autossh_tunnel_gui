@@ -67,7 +67,8 @@ class GUI:
     def connect(self, profile_id):
         log.debug(_("Connecting %s"), profile_id)
 
-        if profile_id not in self.active_profiles:
+        if (profile_id not in self.active_profiles) or \
+                (not self.active_profiles[profile_id].is_active()):
             ssh_profile = self.preferences.get("ssh_profiles", profile_id)
             if ssh_profile is not None:
                 ssh_client = AutosshClient(self.preferences, ssh_profile)
